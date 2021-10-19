@@ -1,0 +1,36 @@
+{
+    "name": "krunkercrouch",
+    "version": "0.1.0",
+    "description": "",
+    "scripts": {
+        "build": "webpack-cli --mode=development -w",
+        "build:production": "webpack-cli --mode=production",
+        "start": "electron ./dist/main.bundle.js",
+        "lint": "eslint src/**/*.ts src/**/*.tsx"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Dennetix/KrunkerCrouch.git"
+    },
+    "author": "",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/Dennetix/KrunkerCrouch/issues"
+    },
+    "homepage": "https://github.com/Dennetix/KrunkerCrouch#readme",
+    "dependencies": {
+        "axios": "^0.23.0",
+        "cross-env": "^7.0.3",
+        "electron": "^15.2.0"
+    },
+    "devDependencies": {
+        "@types/node": "^16.11.1",
+        "@typescript-eslint/eslint-plugin": "^5.1.0",
+        "@typescript-eslint/parser": "^5.1.0",
+        "eslint": "^8.0.1",
+        "ts-loader": "^9.2.6",
+        "typecript": "^0.0.1-security",
+        "webpack": "^5.58.2",
+        "webpack-cli": "^4.9.1"
+    }
+}
