@@ -1,10 +1,12 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, powerSaveBlocker } from 'electron';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 
 app.whenReady()
     .then(() => {
+        powerSaveBlocker.start('prevent-display-sleep');
+
         const win = new BrowserWindow({
             width: 1600,
             height: 900,
