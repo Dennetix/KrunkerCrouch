@@ -1,10 +1,30 @@
-import { app, BrowserWindow, ipcMain, powerSaveBlocker } from 'electron';
+import { app, BrowserWindow, ipcMain, powerSaveBlocker, session } from 'electron';
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 
 app.whenReady()
     .then(() => {
+        session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
+            if (
+                details.url.includes('.png') ||
+                details.url.includes('.jpg') ||
+                details.url.includes('.mp3') ||
+                details.url.includes('.obj') ||
+                details.url.includes('twitter') ||
+                details.url.includes('paypal') ||
+                details.url.includes('unpkg') ||
+                details.url.includes('adsafe') ||
+                details.url.includes('deployads') ||
+                details.url.includes('doubleclick')
+            ) {
+                callback({ cancel: true });
+                return;
+            }
+
+            callback({});
+        });
+
         powerSaveBlocker.start('prevent-display-sleep');
 
         const win = new BrowserWindow({
@@ -28,7 +48,7 @@ app.whenReady()
             win.setMenu(null);
         }
 
-        const loadGame = async(): Promise<void> => {
+        const loadGame = async (): Promise<void> => {
             win.loadURL('data:text/html,<h1>Searching for lobby...</h1>')
                 .catch(console.error);
 
@@ -52,13 +72,19 @@ app.whenReady()
 
             const game = games[Math.floor(Math.random() * games.length)];
 
-            win.loadURL(`https://krunker.io/?game=${game[0]}`)
-                .then(() => {
-                    const script = fs.readFileSync(path.join(__dirname, './injection.bundle.js')).toString();
-                    win.webContents.executeJavaScript(script)
+            const interval = setInterval(() => {
+                if (!win.webContents.isLoading()) {
+                    clearInterval(interval);
+
+                    win.loadURL(`https://krunker.io/?game=${game[0]}`)
+                        .then(() => {
+                            const script = fs.readFileSync(path.join(__dirname, './injection.bundle.js')).toString();
+                            win.webContents.executeJavaScript(script)
+                                .catch(console.error);
+                        })
                         .catch(console.error);
-                })
-                .catch(console.error);
+                }
+            }, 100);
         };
 
         loadGame()

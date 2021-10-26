@@ -82,15 +82,20 @@ setInterval(() => {
             api.click();
         }
 
+        if (Date.now() - timeout >= 265000) {
+            api.sendGameEnded();
+        }
+
         const timer = document.getElementById('timerVal')?.textContent;
-        if (timer === '00:00' || Date.now() - timeout >= 240000) {
-            enabled = false;
-            setTimeout(api.sendGameEnded, 1000);
+        if (timer === '00:00' && document.getElementsByClassName('endTableN').length > 1) {
+            api.sendGameEnded();
+        } else if (timer === '00:00') {
+            timeout = Date.now();
         }
     } else {
         timeout = Date.now();
     }
-}, 500);
+}, 750);
 
 let down = false;
 const toggleCrouch = (): void => {
