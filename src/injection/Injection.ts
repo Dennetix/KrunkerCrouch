@@ -5,19 +5,26 @@ const api = ((window as unknown) as {
         crouch: (down: boolean) => void,
         walk: (foreward: boolean) => void,
         sendGameEnded: () => void,
+        sendLogin: (user: string, pass: string) => void,
 
-        onCounter: (handler: (counter: number) => void) => void
+        onCounter: (handler: (counter: number) => void) => void,
+        onLogin: (handler: (user: string, pass: string) => void) => void
     }
 }).api;
 
 const krunkerFunctions = ((window as unknown) as {
     clearPops: () => void,
-    showWindow: (n: number) => void
+    showWindow: (n: number) => void,
+    loginAcc: () => void
 });
 
 let enabled = true;
 let cps = 3;
 let counter = 0;
+let login: { user: string, pass: string } | undefined;
+
+let foreward = true;
+let timeout = Date.now();
 
 const display = document.createElement('div');
 display.style.position = 'fixed';
@@ -35,10 +42,46 @@ const updateDisplay = (): void => {
     display.innerHTML =
         `State: <span style="color: ${enabled ? 'lime">Enabled' : 'tomato">Disabled'}</span><br/>
         Crouches per second: <span style="color:${cps >= 4 ? 'tomato' : 'deepskyblue'}">${cps}</span><br/>
-        Crouches this session: <span style="color:deepskyblue">${counter}</span><hr/>
+        Crouches this session: <span style="color:deepskyblue">${counter}</span><br/>
+        Timeout in: <span style="color:deepskyblue">${Math.floor((265000 - (Date.now() - timeout)) / 1000)}</span><hr/>
         <span style="color:gray">[Esc]</span> to turn on/off<br/>
         <span style="color:gray">[N]</span> to change lobby<br/>
+        <span style="color:gray">[L]</span> to set autologin<br/>
         <span style="color:gray">[Up/Down]</span> to change speed`;
+};
+
+const loginForm = document.createElement('form');
+loginForm.style.position = 'fixed';
+loginForm.style.left = '50%';
+loginForm.style.top = '50%';
+loginForm.style.transform = 'translate(-50%, -50%)';
+loginForm.style.color = 'white';
+loginForm.style.padding = '20px';
+loginForm.style.borderRadius = '8px';
+loginForm.style.background = 'rgba(1, 1, 1, 0.5)';
+loginForm.style.zIndex = '2147483647';
+loginForm.style.textAlign = 'left';
+loginForm.style.display = 'none';
+document.getElementById('gameUI')?.appendChild(loginForm);
+
+loginForm.innerHTML = `
+    Save login information<br />
+    <input type="text" placeholder="Username" /><br />
+    <input type="password" placeholder="Password" /><br />
+    <input type="submit" value="Save" />
+`;
+
+loginForm.onsubmit = (e) => {
+    e.preventDefault();
+
+    login = {
+        user: (loginForm.children[1] as HTMLInputElement).value,
+        pass: (loginForm.children[3] as HTMLInputElement).value
+    };
+
+    api.sendLogin(login.user, login.pass);
+    enabled = true;
+    loginForm.style.display = 'none';
 };
 
 api.onCounter((c) => {
@@ -46,9 +89,26 @@ api.onCounter((c) => {
     updateDisplay();
 });
 
+api.onLogin((user, pass) => {
+    login = { user, pass };
+});
+
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === 'Escape' && loginForm.style.display === 'none') {
         enabled = !enabled;
+    }
+
+    if (e.key === 'n' && loginForm.style.display === 'none') {
+        api.sendGameEnded();
+    }
+
+    if (e.key === 'l' && loginForm.style.display === 'none') {
+        enabled = false;
+        loginForm.style.display = 'block';
+        document.exitPointerLock();
+    } else if (e.key === 'Escape' && loginForm.style.display === 'block') {
+        enabled = true;
+        loginForm.style.display = 'none';
     }
 
     if (e.key === 'ArrowUp' && cps < 10) {
@@ -58,17 +118,10 @@ document.addEventListener('keydown', (e) => {
         cps -= 1;
     }
 
-    if (enabled && e.key === 'n') {
-        api.sendGameEnded();
-    }
-
     if (e.key !== 'Shift') {
         updateDisplay();
     }
 });
-
-let foreward = true;
-let timeout = Date.now();
 
 setInterval(() => {
     if (enabled) {
@@ -79,7 +132,18 @@ setInterval(() => {
         krunkerFunctions.showWindow(0);
 
         if (document.getElementById('inGameUI')!.style.display !== 'block') {
-            api.click();
+            if (
+                login && document.getElementById('menuAccountUsername')?.textContent === '?' &&
+                document.getElementById('initLoader')?.style.display === 'none'
+            ) {
+                krunkerFunctions.showWindow(5);
+                (document.getElementById('accName') as HTMLInputElement).value = login.user;
+                (document.getElementById('accPass') as HTMLInputElement).value = login.pass;
+                krunkerFunctions.loginAcc();
+                krunkerFunctions.showWindow(0);
+            } else {
+                api.click();
+            }
         }
 
         if (Date.now() - timeout >= 265000) {

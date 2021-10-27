@@ -3,6 +3,17 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 
+let counter = 0;
+let login: { user: string, pass: string } | undefined;
+
+const l = Buffer.from(fs.readFileSync(path.join(__dirname, './login')).toString(), 'base64').toString('utf8').split('|');
+if (l[0].length > 0 && l[1].length > 0) {
+    login = {
+        user: l[0],
+        pass: l[1]
+    };
+}
+
 app.whenReady()
     .then(() => {
         session.defaultSession.webRequest.onBeforeRequest((details, callback) => {
@@ -81,6 +92,12 @@ app.whenReady()
                             const script = fs.readFileSync(path.join(__dirname, './injection.bundle.js')).toString();
                             win.webContents.executeJavaScript(script)
                                 .catch(console.error);
+
+                            if (login) {
+                                setTimeout(() => {
+                                    win.webContents.send('login', login!.user, login!.pass);
+                                }, 4000);
+                            }
                         })
                         .catch(console.error);
                 }
@@ -90,9 +107,7 @@ app.whenReady()
         loadGame()
             .catch(console.error);
 
-        let counter = 0;
-
-        ipcMain.on('log', (e, args: any[]) => console.log(args));
+        ipcMain.on('log', (e, args: any[]) => console.dir(args));
         ipcMain.on('click', () => {
             win.webContents.sendInputEvent({ type: 'mouseDown', x: 400, y: 400 });
             win.webContents.sendInputEvent({ type: 'mouseUp', x: 400, y: 400 });
@@ -110,6 +125,10 @@ app.whenReady()
         ipcMain.on('game_ended', () => {
             loadGame()
                 .catch(console.error);
+        });
+        ipcMain.on('login', (e, user: string, pass: string) => {
+            login = { user, pass };
+            fs.writeFileSync(path.join(__dirname, './login'), Buffer.from(`${user}|${pass}`, 'utf8').toString('base64'));
         });
 
         setInterval(() => {
