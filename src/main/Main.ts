@@ -39,8 +39,8 @@ app.whenReady()
         powerSaveBlocker.start('prevent-display-sleep');
 
         const win = new BrowserWindow({
-            width: 1600,
-            height: 900,
+            width: 800,
+            height: 600,
             title: 'KrunkerCrouch',
             show: false,
             webPreferences: {
