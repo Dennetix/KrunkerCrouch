@@ -142,11 +142,13 @@ setInterval(() => {
         } else if (document.getElementById('menuAccountUsername')?.textContent === '?' && !isLoggingIn) {
             isLoggingIn = true;
             setTimeout(() => {
-                krunkerFunctions.showWindow(5);
-                (document.getElementById('accName') as HTMLInputElement).value = login!.user;
-                (document.getElementById('accPass') as HTMLInputElement).value = login!.pass;
-                krunkerFunctions.loginAcc();
-            }, 100);
+                if (document.getElementById('menuAccountUsername')?.textContent === '?') {
+                    krunkerFunctions.showWindow(5);
+                    (document.getElementById('accName') as HTMLInputElement).value = login!.user;
+                    (document.getElementById('accPass') as HTMLInputElement).value = login!.pass;
+                    krunkerFunctions.loginAcc();
+                }
+            }, 5000);
         } else if (document.getElementById('menuAccountUsername')?.textContent !== '?') {
             krunkerFunctions.showWindow(0);
             api.click();
