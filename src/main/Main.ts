@@ -96,7 +96,7 @@ app.whenReady()
                             if (login) {
                                 setTimeout(() => {
                                     win.webContents.send('login', login!.user, login!.pass);
-                                }, 4000);
+                                }, 2500);
                             }
                         })
                         .catch(console.error);

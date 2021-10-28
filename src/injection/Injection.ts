@@ -22,6 +22,7 @@ let enabled = true;
 let cps = 3;
 let counter = 0;
 let login: { user: string, pass: string } | undefined;
+let isLoggingIn = false;
 
 let foreward = true;
 let timeout = Date.now();
@@ -124,30 +125,31 @@ document.addEventListener('keydown', (e) => {
 });
 
 setInterval(() => {
-    if (enabled) {
+    if (Date.now() - timeout >= 265000) {
+        api.sendGameEnded();
+        return;
+    }
+
+    if (enabled && document.getElementById('initLoader')?.style.display === 'none') {
         api.walk(foreward);
         foreward = !foreward;
 
         krunkerFunctions.clearPops();
-        krunkerFunctions.showWindow(0);
 
-        if (document.getElementById('inGameUI')!.style.display !== 'block') {
-            if (
-                login && document.getElementById('menuAccountUsername')?.textContent === '?' &&
-                document.getElementById('initLoader')?.style.display === 'none'
-            ) {
+        if (!login) {
+            enabled = false;
+            loginForm.style.display = 'block';
+        } else if (document.getElementById('menuAccountUsername')?.textContent === '?' && !isLoggingIn) {
+            isLoggingIn = true;
+            setTimeout(() => {
                 krunkerFunctions.showWindow(5);
-                (document.getElementById('accName') as HTMLInputElement).value = login.user;
-                (document.getElementById('accPass') as HTMLInputElement).value = login.pass;
+                (document.getElementById('accName') as HTMLInputElement).value = login!.user;
+                (document.getElementById('accPass') as HTMLInputElement).value = login!.pass;
                 krunkerFunctions.loginAcc();
-                krunkerFunctions.showWindow(0);
-            } else {
-                api.click();
-            }
-        }
-
-        if (Date.now() - timeout >= 265000) {
-            api.sendGameEnded();
+            }, 100);
+        } else if (document.getElementById('menuAccountUsername')?.textContent !== '?') {
+            krunkerFunctions.showWindow(0);
+            api.click();
         }
 
         const timer = document.getElementById('timerVal')?.textContent;
@@ -156,7 +158,7 @@ setInterval(() => {
         } else if (timer === '00:00') {
             timeout = Date.now();
         }
-    } else {
+    } else if (document.getElementById('initLoader')?.style.display === 'none') {
         timeout = Date.now();
     }
 }, 750);
