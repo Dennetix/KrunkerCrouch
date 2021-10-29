@@ -38,26 +38,32 @@ app.whenReady()
 
         powerSaveBlocker.start('prevent-display-sleep');
 
-        const win = new BrowserWindow({
-            width: 800,
-            height: 600,
-            title: 'KrunkerCrouch',
-            show: false,
-            webPreferences: {
-                preload: path.join(__dirname, './preload.bundle.js')
+        const createWindow = (): BrowserWindow => {
+            const win = new BrowserWindow({
+                width: 800,
+                height: 600,
+                title: 'KrunkerCrouch',
+                show: false,
+                webPreferences: {
+                    preload: path.join(__dirname, './preload.bundle.js')
+                }
+            });
+
+            win.webContents.setUserAgent(win.webContents.userAgent.replace(/Electron.*/, ''));
+            win.on('ready-to-show', () => win.show());
+
+            if (process.env.NODE_ENV === 'development') {
+                win.setMenuBarVisibility(false);
+                win.webContents.openDevTools({ mode: 'detach' });
+                win.webContents.addListener('devtools-opened', () => win.focus());
+            } else {
+                win.setMenu(null);
             }
-        });
 
-        win.webContents.setUserAgent(win.webContents.userAgent.replace(/Electron.*/, ''));
-        win.on('ready-to-show', () => win.show());
+            return win;
+        };
 
-        if (process.env.NODE_ENV === 'development') {
-            win.setMenuBarVisibility(false);
-            win.webContents.openDevTools({ mode: 'detach' });
-            win.webContents.addListener('devtools-opened', () => win.focus());
-        } else {
-            win.setMenu(null);
-        }
+        let win = createWindow();
 
         const loadGame = async (): Promise<void> => {
             win.loadURL('data:text/html,<h1>Searching for lobby...</h1>')
@@ -122,7 +128,11 @@ app.whenReady()
             win.webContents.sendInputEvent({ keyCode: arg ? 'w' : 's', type: 'keyDown' });
             setTimeout(() => win.webContents.sendInputEvent({ keyCode: arg ? 'w' : 's', type: 'keyUp' }), 200);
         });
-        ipcMain.on('game_ended', () => {
+        ipcMain.on('game_ended', (e, reopen: boolean) => {
+            if (reopen) {
+                win.close();
+                win = createWindow();
+            }
             loadGame()
                 .catch(console.error);
         });

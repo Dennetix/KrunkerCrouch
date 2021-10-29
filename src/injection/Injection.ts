@@ -4,7 +4,7 @@ const api = ((window as unknown) as {
         click: () => void,
         crouch: (down: boolean) => void,
         walk: (foreward: boolean) => void,
-        sendGameEnded: () => void,
+        sendGameEnded: (reopen: boolean) => void,
         sendLogin: (user: string, pass: string) => void,
 
         onCounter: (handler: (counter: number) => void) => void,
@@ -100,7 +100,7 @@ document.addEventListener('keydown', (e) => {
     }
 
     if (e.key === 'n' && loginForm.style.display === 'none') {
-        api.sendGameEnded();
+        api.sendGameEnded(false);
     }
 
     if (e.key === 'l' && loginForm.style.display === 'none') {
@@ -126,7 +126,7 @@ document.addEventListener('keydown', (e) => {
 
 setInterval(() => {
     if (Date.now() - timeout >= 265000) {
-        api.sendGameEnded();
+        api.sendGameEnded(true);
         return;
     }
 
@@ -156,7 +156,7 @@ setInterval(() => {
 
         const timer = document.getElementById('timerVal')?.textContent;
         if (timer === '00:00' && document.getElementsByClassName('endTableN').length > 1) {
-            api.sendGameEnded();
+            api.sendGameEnded(false);
         } else if (timer === '00:00') {
             timeout = Date.now();
         }
